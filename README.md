@@ -20,7 +20,6 @@ Mon application est conçue pour offrir une expérience utilisateur. L'applicati
 :art: Expérience Utilisateur
 
     Interface Premium : Design moderne, épuré et entièrement responsive.
-    Dual Thème : Mode Clair / Mode Sombre pour un confort visuel optimal.
     Optimisation : Recherche instantanée et pagination fluide.
 
 :tools: Installation et Démarrage
