@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+
+{% block title %}Facture {{ invoice.invoice_number }}{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="invoice-header">
+        <div class="invoice-meta">
+            <h3>Facture {{ invoice.invoice_number }}</h3>
+            <p><strong>Client :</strong> {{ invoice.client.name|default:"-" }}</p>
+            <p><strong>Date :</strong> {{ invoice.date|date:"d/m/Y" }}</p>
+            <p><strong>Créée le :</strong> {{ invoice.created_at|date:"d/m/Y à H:i" }}</p>
+        </div>
+        <div class="invoice-total-block">
+            <h3>Montant Total</h3>
+            <div class="total-display">{{ invoice.total_amount }} €</div>
+        </div>
+    </div>
+
+    <h3 style="font-size: 1.125rem; font-weight: 600; margin-bottom: 1rem;">Produits</h3>
+
+    {% if invoice.items.all %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Produit</th>
+                    <th style="text-align: right;">Prix Unitaire</th>
+                    <th style="text-align: right;">Quantité</th>
+                    <th style="text-align: right;">Sous-total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in invoice.items.all %}
+                <tr>
+                    <td><strong style="font-weight: 500;">{{ item.product.name }}</strong></td>
+                    <td style="text-align: right;">{{ item.unit_price }} €</td>
+                    <td style="text-align: right;">{{ item.quantity }}</td>
+                    <td style="text-align: right;"><strong style="color: var(--text-primary);">{{ item.subtotal }}
+                            €</strong></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr style="background: var(--bg-tertiary);">
+                    <td colspan="3"
+                        style="text-align: right; padding: 1rem; font-weight: 600; color: var(--text-secondary);">TOTAL
+                    </td>
+                    <td style="text-align: right; font-weight: 700; color: var(--brand-primary); font-size: 1.1rem;">{{ invoice.total_amount }} €</td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    {% else %}
+    <div
+        style="text-align: center; padding: 3rem; color: var(--text-secondary); background: var(--bg-tertiary); border-radius: 8px;">
+        <p>Aucun produit dans cette facture.</p>
+    </div>
+    {% endif %}
+
+    <div class="btn-group" style="margin-top: 2rem; justify-content: flex-end;">
+        <a href="{% url 'invoice_list' %}" class="btn btn-secondary">Retour</a>
+        <a href="{% url 'invoice_duplicate' invoice.pk %}" class="btn btn-primary">Dupliquer</a>
+        <a href="{% url 'invoice_pdf' invoice.pk %}" class="btn btn-danger" target="_blank">Télécharger PDF</a>
+    </div>
+</div>
+{% endblock %}

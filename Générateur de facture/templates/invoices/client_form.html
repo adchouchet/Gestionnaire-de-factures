@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Modifier{% else %}Nouveau{% endif %} Client{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">{% if object %}✏️ Modifier le Client{% else %}➕ Nouveau Client{% endif %}</h1>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+            {{ form.name }}
+            {{ form.name.errors }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.company.id_for_label }}">{{ form.company.label }}</label>
+            {{ form.company }}
+            {{ form.company.errors }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.siret.id_for_label }}">{{ form.siret.label }}</label>
+            {{ form.siret }}
+            {{ form.siret.errors }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.email.id_for_label }}">{{ form.email.label }}</label>
+            {{ form.email }}
+            {{ form.email.errors }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.phone.id_for_label }}">{{ form.phone.label }}</label>
+            {{ form.phone }}
+            {{ form.phone.errors }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>
+            {{ form.address }}
+            {{ form.address.errors }}
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+            <div class="form-group">
+                <label class="form-label" for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>
+                {{ form.city }}
+                {{ form.city.errors }}
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="{{ form.country.id_for_label }}">{{ form.country.label }}</label>
+                {{ form.country }}
+                {{ form.country.errors }}
+            </div>
+        </div>
+
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">💾 Enregistrer</button>
+            <a href="{% url 'client_list' %}" class="btn btn-secondary">❌ Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

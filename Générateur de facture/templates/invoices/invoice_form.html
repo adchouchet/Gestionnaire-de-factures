@@ -1,0 +1,227 @@
+﻿{% extends 'base.html' %}
+
+{% block title %}Nouvelle Facture{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">📝 Nouvelle Facture</h1>
+    </div>
+
+    <form method="post" id="invoice-form">
+        {% csrf_token %}
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.client.id_for_label }}">Client</label>
+            {{ form.client }}
+        </div>
+
+        <div class="form-group">
+            <label class="form-label" for="{{ form.date.id_for_label }}">{{ form.date.label }}</label>
+            {{ form.date }}
+            {% if form.date.errors %}
+            <ul class="errorlist">
+                {% for error in form.date.errors %}
+                <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; margin-top: 2rem; margin-bottom: 1rem;">
+            <h3 style="color: var(--accent-primary);">Produits</h3>
+            <button type="button" id="add-product-row" class="btn btn-success">➕ Ajouter un produit</button>
+        </div>
+
+        <div id="invoice-formset">
+            {{ formset.management_form }}
+
+            <div id="product-rows">
+                {% for form in formset %}
+                <div class="formset-row product-row"
+                    style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                    <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 1rem; align-items: start;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Produit</label>
+                            <select name="{{ form.product.html_name }}" id="{{ form.product.id_for_label }}"
+                                class="form-input product-select" data-price-source="true">
+                                <option value="">---------</option>
+                                {% for product in form.product.field.queryset %}
+                                <option value="{{ product.pk }}" data-price="{{ product.unit_price }}" {% if
+                                    product.pk|stringformat:"s"==form.product.value|stringformat:"s" %}selected{% endif
+                                    %}>
+                                    {{ product.name }} - {{ product.unit_price }} €
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">Quantité</label>
+                            <input type="number" name="{{ form.quantity.html_name }}"
+                                id="{{ form.quantity.id_for_label }}" class="form-input quantity-input" min="1"
+                                value="{{ form.quantity.value|default:1 }}" placeholder="1">
+                        </div>
+
+                        <div style="padding-top: 2rem;">
+                            <button type="button" class="btn btn-danger remove-product-row"
+                                style="padding: 0.75rem 1rem;">🗑️</button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: 8px; margin-top: 2rem;">
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                {{ form.include_vat }}
+                <label for="{{ form.include_vat.id_for_label }}" style="cursor: pointer; font-size: 1.1rem;">Inclure la
+                    TVA (20%)</label>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                {{ form.deduct_stock }}
+                <label for="{{ form.deduct_stock.id_for_label }}" style="cursor: pointer; font-size: 1.1rem;">Retirer du
+                    stock</label>
+            </div>
+            <div style="text-align: right;">
+                <div style="margin-bottom: 0.5rem;">
+                    <span style="color: var(--text-secondary);">Sous-total HT : </span>
+                    <span id="subtotal-display" style="font-weight: bold;">0.00 €</span>
+                </div>
+                <div id="vat-line" style="margin-bottom: 0.5rem; display: none;">
+                    <span style="color: var(--text-secondary);">TVA (20%) : </span>
+                    <span id="vat-display" style="font-weight: bold;">0.00 €</span>
+                </div>
+                <h3 style="color: var(--accent-primary); margin-top: 0.5rem;">
+                    Total <span id="total-label">HT</span> : <span id="total-display">0.00 €</span>
+                </h3>
+            </div>
+        </div>
+
+        <div class="btn-group" style="margin-top: 2rem;">
+            <button type="submit" class="btn btn-primary">💾 Créer la Facture</button>
+            <a href="{% url 'invoice_list' %}" class="btn btn-secondary">❌ Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        let formCount = parseInt("{{ formset.total_form_count }}");
+        const container = document.getElementById('product-rows');
+        const addButton = document.getElementById('add-product-row');
+        const totalFormInput = document.querySelector('input[name="form-TOTAL_FORMS"]');
+        const vatCheckbox = document.getElementById('id_include_vat');
+
+        // Styles pour la checkbox (puisque générée par Django sans classe)
+        if (vatCheckbox) {
+            vatCheckbox.style.width = '20px';
+            vatCheckbox.style.height = '20px';
+            vatCheckbox.style.cursor = 'pointer';
+        }
+
+        // Récupérer les options de produits depuis le premier select
+        const firstProductSelect = container.querySelector('.product-select');
+        let productOptionsHTML = '';
+        if (firstProductSelect) {
+            productOptionsHTML = firstProductSelect.innerHTML;
+        }
+
+        // Template pour une nouvelle ligne
+        function getProductRowTemplate(index) {
+            return `
+            <div class="formset-row product-row" style="background: var(--bg-tertiary); padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem;">
+                <div style="display: grid; grid-template-columns: 2fr 1fr auto; gap: 1rem; align-items: start;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Produit</label>
+                        <select name="form-${index}-product" id="id_form-${index}-product" class="form-input product-select" data-price-source="true">
+                            ${productOptionsHTML}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label">Quantité</label>
+                        <input type="number" name="form-${index}-quantity" id="id_form-${index}-quantity" class="form-input quantity-input" min="1" value="1" placeholder="1">
+                    </div>
+                    
+                    <div style="padding-top: 2rem;">
+                        <button type="button" class="btn btn-danger remove-product-row" style="padding: 0.75rem 1rem;">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        }
+
+        // Ajouter une ligne
+        addButton.addEventListener('click', function () {
+            const newRow = document.createElement('div');
+            newRow.innerHTML = getProductRowTemplate(formCount);
+            container.appendChild(newRow.firstElementChild);
+            formCount++;
+            totalFormInput.value = formCount;
+            updateTotal();
+        });
+
+        // Supprimer une ligne
+        container.addEventListener('click', function (e) {
+            if (e.target.classList.contains('remove-product-row') || e.target.closest('.remove-product-row')) {
+                const row = e.target.closest('.product-row');
+                if (container.querySelectorAll('.product-row').length > 1) {
+                    row.remove();
+                    formCount--;
+                    totalFormInput.value = formCount;
+                    updateTotal();
+                } else {
+                    alert('Vous devez avoir au moins une ligne de produit.');
+                }
+            }
+        });
+
+        // Calcul du total avec TVA
+        function updateTotal() {
+            let subtotal = 0;
+            const rows = container.querySelectorAll('.product-row');
+
+            rows.forEach(row => {
+                const productSelect = row.querySelector('.product-select');
+                const quantityInput = row.querySelector('.quantity-input');
+
+                if (productSelect && quantityInput) {
+                    const selectedOption = productSelect.options[productSelect.selectedIndex];
+                    if (selectedOption && selectedOption.value) {
+                        const price = parseFloat(selectedOption.dataset.price || 0);
+                        const quantity = parseInt(quantityInput.value || 0);
+                        subtotal += price * quantity;
+                    }
+                }
+            });
+
+            const vatCheckbox = document.getElementById('id_include_vat');
+            const includeVat = vatCheckbox ? vatCheckbox.checked : false;
+            const vatAmount = includeVat ? subtotal * 0.20 : 0;
+            const total = subtotal + vatAmount;
+
+            // Mise à jour de l'affichage
+            document.getElementById('subtotal-display').textContent = subtotal.toFixed(2) + ' €';
+            document.getElementById('vat-display').textContent = vatAmount.toFixed(2) + ' €';
+            document.getElementById('total-display').textContent = total.toFixed(2) + ' €';
+            document.getElementById('total-label').textContent = includeVat ? 'TTC' : 'HT';
+            document.getElementById('vat-line').style.display = includeVat ? 'block' : 'none';
+        }
+
+        // Écouter les changements
+        container.addEventListener('change', updateTotal);
+        container.addEventListener('input', updateTotal);
+        if (vatCheckbox) {
+            vatCheckbox.addEventListener('change', updateTotal);
+        }
+
+        // Calcul initial
+        updateTotal();
+    });
+</script>
+{% endblock %}

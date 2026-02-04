@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Supprimer Produit{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">🗑️ Supprimer le Produit</h1>
+    </div>
+
+    <div
+        style="background: rgba(220, 53, 69, 0.1); padding: 1.5rem; border-radius: 8px; border-left: 4px solid var(--danger); margin-bottom: 2rem;">
+        <p style="font-size: 1.1rem; margin-bottom: 1rem;">
+            <strong>⚠️ Attention :</strong> Êtes-vous sûr de vouloir supprimer ce produit ?
+        </p>
+        <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px;">
+            <p><strong>Nom :</strong> {{ object.name }}</p>
+            <p><strong>Prix :</strong> {{ object.unit_price }} €</p>
+            <p><strong>Stock :</strong> {{ object.stock_quantity }}</p>
+        </div>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="btn-group">
+            <button type="submit" class="btn btn-danger">🗑️ Confirmer la Suppression</button>
+            <a href="{% url 'product_list' %}" class="btn btn-secondary">❌ Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

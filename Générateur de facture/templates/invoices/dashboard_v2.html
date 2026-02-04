@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+
+{% block title %}Tableau de bord{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="margin-bottom: 2rem; font-weight: 700;">Tableau de bord</h1>
+
+    <div class="stats-grid">
+        <!-- Total Factures -->
+        <div class="stat-card">
+            <span class="stat-label">Total Factures</span>
+            <span class="stat-number">{{ total_invoices }}</span>
+            <span style="font-size: 0.875rem; color: var(--success); font-weight: 500;">Factures générées</span>
+        </div>
+
+        <!-- Clients -->
+        <div class="stat-card">
+            <span class="stat-label">Clients</span>
+            <span class="stat-number">{{ total_clients }}</span>
+            <span style="font-size: 0.875rem; color: var(--brand-primary); font-weight: 500;">Clients enregistrés</span>
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: start;">
+
+        <!-- Dernières Factures -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Dernières Factures</h2>
+                <a href="{% url 'invoice_list' %}" class="btn btn-secondary" style="font-size: 0.75rem;">Voir tout</a>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Numéro</th>
+                            <th>Date</th>
+                            <th>Client</th>
+                            <th>Montant</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for invoice in invoices %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'invoice_detail' invoice.pk %}" style="font-weight: 600;">
+                                    {{ invoice.invoice_number }}
+                                </a>
+                            </td>
+                            <td>{{ invoice.date|date:"d/m/Y" }}</td>
+                            <td>{{ invoice.client.name|default:"-" }}</td>
+                            <td>{{ invoice.total_amount }} €</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" style="text-align: center; color: var(--text-secondary);">Aucune facture
+                                récente.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Stocks Faibles -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title" style="color: var(--danger);">Stocks Faibles</h2>
+            </div>
+            <div>
+                {% if low_stock_products %}
+                <ul style="list-style: none;">
+                    {% for product in low_stock_products %}
+                    <li
+                        style="display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color);">
+                        <span style="font-weight: 500;">{{ product.name }}</span>
+                        <span style="color: var(--danger); font-weight: 600; font-size: 0.875rem;">
+                            {{ product.stock_quantity }} en stock
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <div style="text-align: center; padding: 2rem 0; color: var(--success);">
+                    <p style="font-weight: 500;">Tout est en ordre</p>
+                    <p style="font-size: 0.875rem; opacity: 0.8;">Aucun produit en rupture.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

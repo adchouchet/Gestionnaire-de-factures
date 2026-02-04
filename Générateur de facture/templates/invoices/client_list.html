@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}Liste des Clients{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h1 class="card-title">👥 Clients</h1>
+        <a href="{% url 'client_create' %}" class="btn btn-primary">➕ Nouveau Client</a>
+    </div>
+
+    <!-- Barre de recherche -->
+    <form method="get" class="search-form">
+        <input type="text" name="search" class="form-input search-input" placeholder="Rechercher un client..."
+            value="{{ request.GET.search }}">
+        <button type="submit" class="btn btn-primary">🔍 Rechercher</button>
+    </form>
+
+    {% if clients %}
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Entreprise</th>
+                    <th>Email</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for client in clients %}
+                <tr>
+                    <td><strong>{{ client.name }}</strong></td>
+                    <td>{{ client.company|default:"-" }}</td>
+                    <td>
+                        {% if client.email %}
+                        <a href="mailto:{{ client.email }}">{{ client.email }}</a>
+                        {% else %}
+                        -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="{% url 'client_update' client.pk %}" class="btn btn-secondary"
+                                style="padding: 0.4rem 0.6rem; font-size: 1.1rem;" title="Modifier">✏️</a>
+                            <a href="{% url 'client_delete' client.pk %}" class="btn btn-danger"
+                                style="padding: 0.4rem 0.6rem; font-size: 1.1rem;" title="Supprimer">🗑️</a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+        <a href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">« Première</a>
+        <a
+            href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">‹
+            Précédente</a>
+        {% endif %}
+
+        <span class="current">Page {{ page_obj.number }} sur {{ page_obj.paginator.num_pages }}</span>
+
+        {% if page_obj.has_next %}
+        <a
+            href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Suivante
+            ›</a>
+        <a
+            href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}">Dernière
+            »</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div style="text-align: center; padding: 3rem; color: var(--text-secondary);">
+        <p style="font-size: 1.2rem;">Aucun client trouvé.</p>
+        <a href="{% url 'client_create' %}" class="btn btn-primary" style="margin-top: 1rem;">Créer le premier
+            client</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
